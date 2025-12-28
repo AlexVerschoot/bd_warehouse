@@ -25,7 +25,7 @@ class AluminiumExtrusionIType(BasePartObject):
         for row in reader:
             if len(row) == 0:  # skip blank rows
                 continue
-            name, width, height, corner_radius, hole_dia, flange_thickness, flange_opening, flange_max_width, flange_depth, flange_bottom_radius, flange_neck_top_radius, flange_neck_bottom_radius, flange_top_radius, source = row
+            name, width, height, corner_radius, hole_dia, flange_thickness, flange_opening, flange_max_width, flange_depth, flange_bottom_radius, flange_neck_top_radius, flange_neck_bottom_radius, flange_top_radius, flange_notch_width,flange_notch_depth, source = row
 
             extrusionData[name] = {}
             extrusionData[name]['width'] = float(width)
@@ -40,6 +40,8 @@ class AluminiumExtrusionIType(BasePartObject):
             extrusionData[name]['flange_neck_top_radius'] = float(flange_neck_top_radius)
             extrusionData[name]['flange_neck_bottom_radius'] = float(flange_neck_bottom_radius)
             extrusionData[name]['flange_top_radius'] = float(flange_top_radius)
+            extrusionData[name]['flange_notch_width'] = float(flange_notch_width)
+            extrusionData[name]['flange_notch_depth'] = float(flange_notch_depth)
             extrusionData[name]['source'] = source
 
 
@@ -72,39 +74,43 @@ class AluminiumExtrusionIType(BasePartObject):
             ]
             for (x, y), rot in groove_placements:
                 with BuildLine(Location((x,y,0),angle=rot)) as grooves:
-                    slot_groove_points = [
+                    slot_groove_points = []
+                    slot_groove_radii = []
                         #extra start in line with the profile to make easy entry fillet
-                        (self.extrusionData[extrusion_type]['flange_opening']*3/4, -1),
-                        (self.extrusionData[extrusion_type]['flange_opening']*3/4, 0),
+                    slot_groove_points.append((self.extrusionData[extrusion_type]['flange_opening']*3/4, -1))
+                    slot_groove_radii.append(0)
+                    slot_groove_points.append((self.extrusionData[extrusion_type]['flange_opening']*3/4, 0))
+                    slot_groove_radii.append(0)
                         #the real figure starts
-                        (self.extrusionData[extrusion_type]['flange_opening']/2, 0),
-                        (self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_thickness']),
-                        (self.extrusionData[extrusion_type]['flange_max_width']/2, self.extrusionData[extrusion_type]['flange_thickness']),
-                        (self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_depth']),
-                        #(0, self.extrusionData[extrusion_type]['flange_depth']),
-                        (-self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_depth']),
-                        (-self.extrusionData[extrusion_type]['flange_max_width']/2, self.extrusionData[extrusion_type]['flange_thickness']),
-                        (-self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_thickness']),
-                        (-self.extrusionData[extrusion_type]['flange_opening']/2, 0),
-                        #the real figure ends
-                        (-self.extrusionData[extrusion_type]['flange_opening']*3/4, 0),
-                        (-self.extrusionData[extrusion_type]['flange_opening']*3/4, -1),
-
-                    ]
-                    slot_groove_radii = [
-                        0,
-                        0,
-                        self.extrusionData[extrusion_type]['flange_neck_top_radius'],
-                        self.extrusionData[extrusion_type]['flange_neck_bottom_radius'],
-                        self.extrusionData[extrusion_type]['flange_top_radius'],
-                        self.extrusionData[extrusion_type]['flange_bottom_radius'],
-                        self.extrusionData[extrusion_type]['flange_bottom_radius'],
-                        self.extrusionData[extrusion_type]['flange_top_radius'],
-                        self.extrusionData[extrusion_type]['flange_neck_bottom_radius'],
-                        self.extrusionData[extrusion_type]['flange_neck_top_radius'],
-                        0,
-                        0
-                    ]
+                    slot_groove_points.append((self.extrusionData[extrusion_type]['flange_opening']/2, 0))
+                    slot_groove_radii.append((self.extrusionData[extrusion_type]['flange_neck_top_radius']))
+                    slot_groove_points.append((self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_thickness']))
+                    slot_groove_radii.append((self.extrusionData[extrusion_type]['flange_neck_bottom_radius']))
+                    slot_groove_points.append((self.extrusionData[extrusion_type]['flange_max_width']/2, self.extrusionData[extrusion_type]['flange_thickness']))
+                    slot_groove_radii.append((self.extrusionData[extrusion_type]['flange_top_radius']))
+                    slot_groove_points.append((self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_depth']))
+                    slot_groove_radii.append((self.extrusionData[extrusion_type]['flange_bottom_radius']))
+                    if(self.extrusionData[extrusion_type]['flange_notch_width']>0):
+                        slot_groove_points.append((self.extrusionData[extrusion_type]['flange_notch_width']/2, self.extrusionData[extrusion_type]['flange_depth']))
+                        slot_groove_radii.append(0)
+                        slot_groove_points.append((0, self.extrusionData[extrusion_type]['flange_depth']+self.extrusionData[extrusion_type]['flange_notch_depth']))
+                        slot_groove_radii.append(0)
+                        slot_groove_points.append((-self.extrusionData[extrusion_type]['flange_notch_width']/2, self.extrusionData[extrusion_type]['flange_depth']))
+                        slot_groove_radii.append(0)
+                    slot_groove_points.append((-self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_depth']))
+                    slot_groove_radii.append(self.extrusionData[extrusion_type]['flange_bottom_radius'])
+                    slot_groove_points.append((-self.extrusionData[extrusion_type]['flange_max_width']/2, self.extrusionData[extrusion_type]['flange_thickness']))
+                    slot_groove_radii.append(self.extrusionData[extrusion_type]['flange_top_radius'])
+                    slot_groove_points.append((-self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_thickness']))
+                    slot_groove_radii.append(self.extrusionData[extrusion_type]['flange_neck_bottom_radius'])
+                    slot_groove_points.append((-self.extrusionData[extrusion_type]['flange_opening']/2, 0))
+                    #the real figure ends
+                    slot_groove_radii.append(self.extrusionData[extrusion_type]['flange_neck_top_radius'])
+                    slot_groove_points.append((-self.extrusionData[extrusion_type]['flange_opening']*3/4, 0))
+                    slot_groove_radii.append(0)
+                    slot_groove_points.append((-self.extrusionData[extrusion_type]['flange_opening']*3/4, -1))
+                    slot_groove_radii.append(0)
+                   
                     fpl = FilletPolyline(slot_groove_points, radius=slot_groove_radii, close=True, mode=Mode.ADD)
                 make_face(edges=grooves.edges(), mode=Mode.SUBTRACT)
         return mainSketch.face()
@@ -113,5 +119,7 @@ class AluminiumExtrusionIType(BasePartObject):
 if __name__ == "__main__":
     from ocp_vscode import *
 
-    a = AluminiumExtrusionIType(length=50.0)
+    a = AluminiumExtrusionIType(extrusion_type='Misumi HFS5-2020', length=50.0)
+    b = AluminiumExtrusionIType(extrusion_type='Item24 Profile 5 20x20', length=50.0)
+
     show_all()
