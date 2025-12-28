@@ -11,7 +11,7 @@ desc:
 
 """
 
-from build123d import Align, BasePartObject, BaseSketchObject, BuildLine, BuildPart, BuildSketch, Circle, Literal, Location, Locations, Mode, Plane, Polyline, RectangleRounded, FilletPolyline, RotationLike, extrude, make_face, mirror
+from build123d import Align, BasePartObject, BaseSketchObject, BuildLine, BuildPart, BuildSketch, Circle, Face, Literal, Location, Locations, Mode, Plane, Polyline, RectangleRounded, FilletPolyline, RotationLike, extrude, make_face, mirror
 import csv
 import importlib.resources as pkg_resources
 import bd_warehouse
@@ -52,59 +52,62 @@ class AluminiumExtrusionIType(BasePartObject):
         mode: Mode = Mode.ADD,
     ):
         with BuildPart() as extrusion:
-            with BuildSketch() as mainSketch:
-                #base rectangle
-                RectangleRounded(
-                    width=self.extrusionData[extrusion_type]['width'],
-                    height=self.extrusionData[extrusion_type]['height'],
-                    radius=self.extrusionData[extrusion_type]['corner_radius']
-                )
-                Circle(radius=self.extrusionData[extrusion_type]['hole_dia']/2, mode=Mode.SUBTRACT)
-                groove_placements = [
-                    ((0, -self.extrusionData[extrusion_type]['height'] / 2), 0),
-                    ((0,  self.extrusionData[extrusion_type]['height'] / 2), 180),
-                    ((-self.extrusionData[extrusion_type]['width'] / 2, 0), -90),
-                    (( self.extrusionData[extrusion_type]['width'] / 2, 0), 90),
-                ]
-                for (x, y), rot in groove_placements:
-                    with BuildLine(Location((x,y,0),angle=rot)) as grooves:
-                        slot_groove_points = [
-                            #extra start in line with the profile to make easy entry fillet
-                            (self.extrusionData[extrusion_type]['flange_opening']*3/4, -1),
-                            (self.extrusionData[extrusion_type]['flange_opening']*3/4, 0),
-                            #the real figure starts
-                            (self.extrusionData[extrusion_type]['flange_opening']/2, 0),
-                            (self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_thickness']),
-                            (self.extrusionData[extrusion_type]['flange_max_width']/2, self.extrusionData[extrusion_type]['flange_thickness']),
-                            (self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_depth']),
-                            #(0, self.extrusionData[extrusion_type]['flange_depth']),
-                            (-self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_depth']),
-                            (-self.extrusionData[extrusion_type]['flange_max_width']/2, self.extrusionData[extrusion_type]['flange_thickness']),
-                            (-self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_thickness']),
-                            (-self.extrusionData[extrusion_type]['flange_opening']/2, 0),
-                            #the real figure ends
-                            (-self.extrusionData[extrusion_type]['flange_opening']*3/4, 0),
-                            (-self.extrusionData[extrusion_type]['flange_opening']*3/4, -1),
-
-                        ]
-                        slot_groove_radii = [
-                            0,
-                            0,
-                            self.extrusionData[extrusion_type]['flange_neck_top_radius'],
-                            self.extrusionData[extrusion_type]['flange_neck_bottom_radius'],
-                            self.extrusionData[extrusion_type]['flange_top_radius'],
-                            self.extrusionData[extrusion_type]['flange_bottom_radius'],
-                            self.extrusionData[extrusion_type]['flange_bottom_radius'],
-                            self.extrusionData[extrusion_type]['flange_top_radius'],
-                            self.extrusionData[extrusion_type]['flange_neck_bottom_radius'],
-                            self.extrusionData[extrusion_type]['flange_neck_top_radius'],
-                            0,
-                            0
-                        ]
-                        fpl = FilletPolyline(slot_groove_points, radius=slot_groove_radii, close=True, mode=Mode.ADD)
-                    make_face(edges=grooves.edges(), mode=Mode.SUBTRACT)
-            extrude(to_extrude=mainSketch.face(), amount=length)
+            extrude(to_extrude=self.getExtrusionFace(extrusion_type), amount=length)
         super().__init__(part=extrusion.part, rotation=rotation, align=align, mode=mode)
+
+    def getExtrusionFace(self, extrusion_type) -> Face:
+        with BuildSketch() as mainSketch:
+            #base rectangle
+            RectangleRounded(
+                width=self.extrusionData[extrusion_type]['width'],
+                height=self.extrusionData[extrusion_type]['height'],
+                radius=self.extrusionData[extrusion_type]['corner_radius']
+            )
+            Circle(radius=self.extrusionData[extrusion_type]['hole_dia']/2, mode=Mode.SUBTRACT)
+            groove_placements = [
+                ((0, -self.extrusionData[extrusion_type]['height'] / 2), 0),
+                ((0,  self.extrusionData[extrusion_type]['height'] / 2), 180),
+                ((-self.extrusionData[extrusion_type]['width'] / 2, 0), -90),
+                (( self.extrusionData[extrusion_type]['width'] / 2, 0), 90),
+            ]
+            for (x, y), rot in groove_placements:
+                with BuildLine(Location((x,y,0),angle=rot)) as grooves:
+                    slot_groove_points = [
+                        #extra start in line with the profile to make easy entry fillet
+                        (self.extrusionData[extrusion_type]['flange_opening']*3/4, -1),
+                        (self.extrusionData[extrusion_type]['flange_opening']*3/4, 0),
+                        #the real figure starts
+                        (self.extrusionData[extrusion_type]['flange_opening']/2, 0),
+                        (self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_thickness']),
+                        (self.extrusionData[extrusion_type]['flange_max_width']/2, self.extrusionData[extrusion_type]['flange_thickness']),
+                        (self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_depth']),
+                        #(0, self.extrusionData[extrusion_type]['flange_depth']),
+                        (-self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_depth']),
+                        (-self.extrusionData[extrusion_type]['flange_max_width']/2, self.extrusionData[extrusion_type]['flange_thickness']),
+                        (-self.extrusionData[extrusion_type]['flange_opening']/2, self.extrusionData[extrusion_type]['flange_thickness']),
+                        (-self.extrusionData[extrusion_type]['flange_opening']/2, 0),
+                        #the real figure ends
+                        (-self.extrusionData[extrusion_type]['flange_opening']*3/4, 0),
+                        (-self.extrusionData[extrusion_type]['flange_opening']*3/4, -1),
+
+                    ]
+                    slot_groove_radii = [
+                        0,
+                        0,
+                        self.extrusionData[extrusion_type]['flange_neck_top_radius'],
+                        self.extrusionData[extrusion_type]['flange_neck_bottom_radius'],
+                        self.extrusionData[extrusion_type]['flange_top_radius'],
+                        self.extrusionData[extrusion_type]['flange_bottom_radius'],
+                        self.extrusionData[extrusion_type]['flange_bottom_radius'],
+                        self.extrusionData[extrusion_type]['flange_top_radius'],
+                        self.extrusionData[extrusion_type]['flange_neck_bottom_radius'],
+                        self.extrusionData[extrusion_type]['flange_neck_top_radius'],
+                        0,
+                        0
+                    ]
+                    fpl = FilletPolyline(slot_groove_points, radius=slot_groove_radii, close=True, mode=Mode.ADD)
+                make_face(edges=grooves.edges(), mode=Mode.SUBTRACT)
+        return mainSketch.face()
 
 
 if __name__ == "__main__":
