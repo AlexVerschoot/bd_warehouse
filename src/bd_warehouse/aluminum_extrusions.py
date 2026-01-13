@@ -11,10 +11,10 @@ desc:
 
 """
 
-from build123d import Align, BasePartObject, BuildLine, BuildPart, BuildSketch, Circle, ExtensionLine, Face, Location, Mode, RectangleRounded, FilletPolyline, RotationLike, extrude, make_face
+from build123d import Align, BasePartObject, BuildLine, BuildPart, BuildSketch, Circle, ExtensionLine, Face, Location, Mode, RectangleRounded, FilletPolyline, RotationLike, ShapeList, extrude, make_face
 from build123d import Draft
 import csv
-import bd_warehouse
+import bd_warehouse # type: ignore
 import importlib.resources
 
 
@@ -28,19 +28,20 @@ class AluminiumExtrusionIType(BasePartObject):
         mode: Mode = Mode.ADD,
     ):
         with BuildPart() as extrusion:
-            extrude(to_extrude=self.getExtrusionFace(extrusion_type), amount=length)  # type: ignore
-        super().__init__(part=extrusion.part, rotation=rotation, align=align, mode=mode) # type: ignore
+            extrude(to_extrude=self.getExtrusionFace(extrusion_type), amount=length)
+        super().__init__(part=extrusion.part, rotation=rotation, align=align, mode=mode) # pyright: ignore[reportArgumentType]
 
-    def getExtrusionFace(extrusion_type: str) -> Face:  # type: ignore
+    @staticmethod
+    def getExtrusionFace(extrusion_type: str) -> Face:  
         extrusionData = AluminiumExtrusionIType.getExtrusionData()
         with BuildSketch() as mainSketch:
             #base rectangle
             RectangleRounded(
-                width=extrusionData[extrusion_type]['width'], # type: ignore
-                height=extrusionData[extrusion_type]['height'], # type: ignore
-                radius=extrusionData[extrusion_type]['corner_radius'] # type: ignore
+                width=float(extrusionData[extrusion_type]['width']), 
+                height=float(extrusionData[extrusion_type]['height']), 
+                radius=float(extrusionData[extrusion_type]['corner_radius']) 
             )
-            Circle(radius=extrusionData[extrusion_type]['hole_dia']/2, mode=Mode.SUBTRACT) # type: ignore
+            Circle(radius=float(extrusionData[extrusion_type]['hole_dia'])/2, mode=Mode.SUBTRACT) 
             groove_placements: list[tuple[tuple[float, float], float]] = [ 
                 ((0, -float(extrusionData[extrusion_type]['height']) / 2), 0),
                 ((0,  float(extrusionData[extrusion_type]['height']) / 2), 180),
@@ -96,29 +97,36 @@ class AluminiumExtrusionIType(BasePartObject):
                 make_face(edges=grooves.edges(), mode=Mode.SUBTRACT)
         return mainSketch.face()
     
-    def getDimensionedExtrusionFace(extrusion_type:str)->Face:  # type: ignore
+    @staticmethod
+    def getDimensionedExtrusionFace(extrusion_type:str)->Face|ShapeList[Face]:  
         extrusionData = AluminiumExtrusionIType.getExtrusionData()
-        extrusion_face = AluminiumExtrusionIType.getExtrusionFace(extrusion_type) # type: ignore
+        extrusion_face: Face = AluminiumExtrusionIType.getExtrusionFace(extrusion_type) 
         draft = Draft(font_size=2, extension_gap=0, line_width=0.1, pad_around_text=0.5,)
         width =  ExtensionLine(
-                border=((-extrusionData[name]['width']/2, extrusionData[name]['height']/2),(extrusionData[name]['width']/2, extrusionData[name]['height']/2)), # type: ignore
-                offset=-extrusionData[name]['height']*1/4, # type: ignore
+                border=[
+                    (-float(extrusionData[extrusion_type]['width'])/2, float(extrusionData[extrusion_type]['height'])/2, 0.0),
+                    (float(extrusionData[extrusion_type]['width'])/2, float(extrusionData[extrusion_type]['height'])/2, 0.0)
+                ],
+                offset=-float(extrusionData[name]['height'])*1/4, 
                 draft=draft,
                 label="width"
             )
         height =  ExtensionLine(
-                border=((extrusionData[name]['width']/2, -extrusionData[name]['height']/2),(extrusionData[name]['width']/2, extrusionData[name]['height']/2)), # type: ignore
-                offset=extrusionData[name]['width']*1/4, # type: ignore
+                border=[
+                    (float(extrusionData[name]['width'])/2, -float(extrusionData[name]['height'])/2,0.0),
+                    (float(extrusionData[name]['width'])/2, float(extrusionData[name]['height'])/2,0.0)
+                ],
+                offset=float(extrusionData[name]['width'])*1/4, 
                 draft=draft,
                 label="height"
             )
         
-        newFace = extrusion_face + width + height # type: ignore
-        return newFace # type: ignore
+        newFace = extrusion_face + width + height
+        return newFace 
 
 
     @staticmethod
-    def getExtrusionData() -> dict[str, dict[str, float | str]]: # type: ignore
+    def getExtrusionData() -> dict[str, dict[str, float | str]]: 
         extrusionData:dict[str, dict[str, float | str]] = {}
         
         with importlib.resources.files(bd_warehouse).joinpath("data/aluminum_extrusions_I_type.csv").open("r") as csvfile:
@@ -157,8 +165,8 @@ if __name__ == "__main__":
 
     #a = AluminiumExtrusionIType(extrusion_type='Misumi HFS5-2020', length=50.0)
     #b = AluminiumExtrusionIType(extrusion_type='Item24 Profile 5 20x20', length=50.0)
-    name='Misumi HFS5-2020'
-    face = AluminiumExtrusionIType.getDimensionedExtrusionFace(name) # type: ignore
+    name ='Misumi HFS5-2020'
+    face= AluminiumExtrusionIType.getDimensionedExtrusionFace(name) 
 
 
 
