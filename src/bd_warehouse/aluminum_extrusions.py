@@ -105,7 +105,7 @@ class AluminiumExtrusionIType(BasePartObject):
         extrusionData = AluminiumExtrusionIType.getExtrusionData()
         extrusion_face: Face = AluminiumExtrusionIType.getExtrusionFace(extrusion_type) 
         newFace = extrusion_face 
-        draft = Draft(font_size=2, extension_gap=0, line_width=0.1, pad_around_text=0.5,)
+        draft = Draft(font_size=1, extension_gap=0, line_width=0.1, pad_around_text=0.5,arrow_length=1)
         width =  ExtensionLine(
                 border=[
                     (-float(extrusionData[extrusion_type]['width'])/2, float(extrusionData[extrusion_type]['height'])/2, 0.1),
@@ -141,6 +141,21 @@ class AluminiumExtrusionIType(BasePartObject):
             )
        #corner_radius.color = Color(0,0,0)
         newFace += corner_radius
+        hole_dia =  DimensionLine(
+                path=[
+                    (0.0, 
+                     -float(extrusionData[name]['hole_dia'])/2,
+                     0.1),
+                    (0.0, 
+                     float(extrusionData[name]['hole_dia'])/2,
+                     0.1) #a little bit higher, so it would be visible over the figure
+                ],
+                draft=draft,
+                arrows=(true, true),
+                label="hole_dia" if labels else None
+            )
+       #corner_radius.color = Color(0,0,0)
+        newFace += hole_dia
 
         return newFace 
 
