@@ -120,28 +120,28 @@ class AluminiumExtrusionIType(BasePartObject):
                     (-float(extrusionData[extrusion_type]['width'])/2, float(extrusionData[extrusion_type]['height'])/2, 0.1),
                     (float(extrusionData[extrusion_type]['width'])/2, float(extrusionData[extrusion_type]['height'])/2, 0.1)
                 ],
-                offset=-float(extrusionData[name]['height'])*1/4, 
+                offset=-float(extrusionData[extrusion_type]['height'])*1/4, 
                 draft=draft,
                 label="width" if labels else None
             )
         newFace += width
         height =  ExtensionLine(
                 border=[
-                    (float(extrusionData[name]['width'])/2, -float(extrusionData[name]['height'])/2,0.1),
-                    (float(extrusionData[name]['width'])/2, float(extrusionData[name]['height'])/2,0.1)
+                    (float(extrusionData[extrusion_type]['width'])/2, -float(extrusionData[extrusion_type]['height'])/2,0.1),
+                    (float(extrusionData[extrusion_type]['width'])/2, float(extrusionData[extrusion_type]['height'])/2,0.1)
                 ],
-                offset=float(extrusionData[name]['width'])*1/4, 
+                offset=float(extrusionData[extrusion_type]['width'])*1/4, 
                 draft=draft,
                 label="height" if labels else None
             )
         newFace += height
         corner_radius =  DimensionLine(
                 path=[
-                    (float(extrusionData[name]['width'])/2-float(extrusionData[name]['corner_radius']), 
-                     float(extrusionData[name]['height'])/2-float(extrusionData[name]['corner_radius']),
+                    (float(extrusionData[extrusion_type]['width'])/2-float(extrusionData[extrusion_type]['corner_radius']), 
+                     float(extrusionData[extrusion_type]['height'])/2-float(extrusionData[extrusion_type]['corner_radius']),
                      0.1),
-                    (float(extrusionData[name]['width'])/2-float(extrusionData[name]['corner_radius'])+sin(pi/4)*float(extrusionData[name]['corner_radius']), 
-                     float(extrusionData[name]['height'])/2-float(extrusionData[name]['corner_radius'])+sin(pi/4)*float(extrusionData[name]['corner_radius']),
+                    (float(extrusionData[extrusion_type]['width'])/2-float(extrusionData[extrusion_type]['corner_radius'])+sin(pi/4)*float(extrusionData[extrusion_type]['corner_radius']), 
+                     float(extrusionData[extrusion_type]['height'])/2-float(extrusionData[extrusion_type]['corner_radius'])+sin(pi/4)*float(extrusionData[extrusion_type]['corner_radius']),
                      0.1) #a little bit higher, so it would be visible over the other arrows
                 ],
                 draft=draft,
@@ -153,10 +153,10 @@ class AluminiumExtrusionIType(BasePartObject):
         hole_dia =  DimensionLine(
                 path=[
                     (0.0, 
-                     -float(extrusionData[name]['hole_dia'])/2,
+                     -float(extrusionData[extrusion_type]['hole_dia'])/2,
                      0.1),
                     (0.0, 
-                     float(extrusionData[name]['hole_dia'])/2,
+                     float(extrusionData[extrusion_type]['hole_dia'])/2,
                      0.1) #a little bit higher, so it would be visible over the figure
                 ],
                 draft=draft,
@@ -168,9 +168,9 @@ class AluminiumExtrusionIType(BasePartObject):
 
         return newFace 
     
-    #@staticmethod
-    #def getDimensionedGroove(extrusion_type:str, labels:bool)->Face|ShapeList[Face]:
-
+    @staticmethod
+    def getDimensionedGroove(extrusion_type:str, labels:bool): # type: ignore
+        pass
 
     @staticmethod
     def getExtrusionData() -> dict[str, dict[str, float | str]]: 
@@ -210,10 +210,11 @@ class AluminiumExtrusionIType(BasePartObject):
 if __name__ == "__main__":
     from ocp_vscode import show_all # type: ignore
 
-    a = AluminiumExtrusionIType(extrusion_type='Misumi HFS5-2020', length=50.0)
-    b = AluminiumExtrusionIType(extrusion_type='Item24 Profile 5 20x20', length=50.0)
-    name ='Misumi HFS5-2020'
-    face= AluminiumExtrusionIType.getDimensionedExtrusionFace(name, labels=true) 
+    #a = AluminiumExtrusionIType(extrusion_type='Misumi HFS5-2020', length=50.0)
+    #b = AluminiumExtrusionIType(extrusion_type='Item24 Profile 5 20x20', length=50.0)
+    #name ='Misumi HFS5-2020'
+    #face= AluminiumExtrusionIType.getDimensionedExtrusionFace(name, labels=true) 
+
 
 
 
