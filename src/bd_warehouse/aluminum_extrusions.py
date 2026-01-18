@@ -20,7 +20,7 @@ import importlib.resources
 from sympy import false, true
 
 
-class AluminiumExtrusionIType(BasePartObject):
+class AluminiumExtrusion(BasePartObject):
     def __init__(
         self,
         length:float,
@@ -35,7 +35,7 @@ class AluminiumExtrusionIType(BasePartObject):
 
     @staticmethod
     def getExtrusionFace(extrusion_type: str) -> Face:  
-        extrusionData = AluminiumExtrusionIType.getExtrusionData()
+        extrusionData = AluminiumExtrusion.getExtrusionData()
         with BuildSketch() as mainSketch:
             # Base rectangle
             RectangleRounded(
@@ -54,13 +54,13 @@ class AluminiumExtrusionIType(BasePartObject):
             ]
             for (x, y), rot in groove_placements: 
                 with BuildLine(Location((x, y, 0), angle=rot)) as grooves:
-                    AluminiumExtrusionIType.getGrooveGeometry(extrusion_type)
+                    AluminiumExtrusion.getGrooveGeometry(extrusion_type)
                 make_face(edges=grooves.edges(), mode=Mode.SUBTRACT)
         return mainSketch.face()
 
     @staticmethod
     def getGrooveGeometry(extrusion_type: str) -> FilletPolyline:
-        extrusionData = AluminiumExtrusionIType.getExtrusionData()
+        extrusionData = AluminiumExtrusion.getExtrusionData()
         points: list[tuple[float, float]] = []
         radii: list[float] = []
 
@@ -111,8 +111,8 @@ class AluminiumExtrusionIType(BasePartObject):
     
     @staticmethod
     def getDimensionedExtrusionFace(extrusion_type:str, labels:bool)->Face|ShapeList[Face]:  
-        extrusionData = AluminiumExtrusionIType.getExtrusionData()
-        extrusion_face: Face = AluminiumExtrusionIType.getExtrusionFace(extrusion_type) 
+        extrusionData = AluminiumExtrusion.getExtrusionData()
+        extrusion_face: Face = AluminiumExtrusion.getExtrusionFace(extrusion_type) 
         newFace = extrusion_face 
         draft = Draft(font_size=1, extension_gap=0, line_width=0.1, pad_around_text=0.5,arrow_length=1)
         width =  ExtensionLine(
@@ -176,7 +176,7 @@ class AluminiumExtrusionIType(BasePartObject):
     def getExtrusionData() -> dict[str, dict[str, float | str]]: 
         extrusionData:dict[str, dict[str, float | str]] = {}
         
-        with importlib.resources.files(bd_warehouse).joinpath("data/aluminum_extrusions_I_type.csv").open("r") as csvfile:
+        with importlib.resources.files(bd_warehouse).joinpath("data/aluminum_extrusions.csv").open("r") as csvfile:
             reader = csv.reader(csvfile)
             next(reader, None)  # skip the header row
             for row in reader:
@@ -212,8 +212,8 @@ if __name__ == "__main__":
 
     #a = AluminiumExtrusionIType(extrusion_type='Misumi HFS5-2020', length=50.0)
     #b = AluminiumExtrusionIType(extrusion_type='Item24 Profile 5 20x20', length=50.0)
-    #name ='Misumi HFS5-2020'
-    #face= AluminiumExtrusionIType.getDimensionedExtrusionFace(name, labels=true) 
+    name ='Misumi HFS5-2020'
+    face= AluminiumExtrusion.getDimensionedExtrusionFace(name, labels=true) 
 
 
 
