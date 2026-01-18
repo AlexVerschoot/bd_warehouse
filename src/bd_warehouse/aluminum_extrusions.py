@@ -11,7 +11,6 @@ desc:
 
 """
 
-from curses import COLOR_BLACK
 from build123d import Align, BasePartObject, BuildLine, BuildPart, BuildSketch, Circle, Color, DimensionLine, ExtensionLine, Face, Location, Mode, RectangleRounded, FilletPolyline, RotationLike, ShapeList, extrude, make_face, pi, sin, sqrt
 from build123d import Draft
 import csv
@@ -38,13 +37,15 @@ class AluminiumExtrusionIType(BasePartObject):
     def getExtrusionFace(extrusion_type: str) -> Face:  
         extrusionData = AluminiumExtrusionIType.getExtrusionData()
         with BuildSketch() as mainSketch:
-            #base rectangle
+            # Base rectangle
             RectangleRounded(
                 width=float(extrusionData[extrusion_type]['width']), 
                 height=float(extrusionData[extrusion_type]['height']), 
                 radius=float(extrusionData[extrusion_type]['corner_radius']) 
             )
             Circle(radius=float(extrusionData[extrusion_type]['hole_dia'])/2, mode=Mode.SUBTRACT) 
+            
+            # Add grooves
             groove_placements: list[tuple[tuple[float, float], float]] = [ 
                 ((0, -float(extrusionData[extrusion_type]['height']) / 2), 0),
                 ((0,  float(extrusionData[extrusion_type]['height']) / 2), 180),
@@ -52,53 +53,61 @@ class AluminiumExtrusionIType(BasePartObject):
                 (( float(extrusionData[extrusion_type]['width']) / 2, 0), 90),
             ]
             for (x, y), rot in groove_placements: 
-                with BuildLine(Location((x,y,0),angle=rot)) as grooves:
-                    slot_groove_points: list[tuple[float, float]] = []
-                    slot_groove_radii: list[float] = []
-                        #extra start in line with the profile to make easy entry fillet
-                    slot_groove_points.append((float(extrusionData[extrusion_type]['flange_opening'])*3/4, -1))
-                    slot_groove_radii.append(0)
-                    slot_groove_points.append((float(extrusionData[extrusion_type]['flange_opening'])*3/4, 0))
-                    slot_groove_radii.append(0)
-                        #the real figure starts
-                    slot_groove_points.append((float(extrusionData[extrusion_type]['flange_opening'])/2, 0))
-                    slot_groove_radii.append((float(extrusionData[extrusion_type]['flange_neck_top_radius'])))
-                    slot_groove_points.append((float(extrusionData[extrusion_type]['flange_opening'])/2, float(extrusionData[extrusion_type]['flange_thickness'])))
-                    slot_groove_radii.append((float(extrusionData[extrusion_type]['flange_neck_bottom_radius'])))
-                    slot_groove_points.append((float(extrusionData[extrusion_type]['flange_max_width'])/2, float(extrusionData[extrusion_type]['flange_thickness'])))
-                    slot_groove_radii.append((float(extrusionData[extrusion_type]['flange_top_radius'])))
-                    if (float(extrusionData[extrusion_type]['flange_offset'])>0):
-                        slot_groove_points.append((float(extrusionData[extrusion_type]['flange_max_width'])/2, float(extrusionData[extrusion_type]['flange_thickness'])+float(extrusionData[extrusion_type]['flange_offset'])))
-                        slot_groove_radii.append(0)
-                    slot_groove_points.append((float(extrusionData[extrusion_type]['flange_bottom_width'])/2, float(extrusionData[extrusion_type]['flange_depth'])))
-                    slot_groove_radii.append((float(extrusionData[extrusion_type]['flange_bottom_radius'])))
-                    if(float(extrusionData[extrusion_type]['flange_notch_width'])>0):
-                        slot_groove_points.append((float(extrusionData[extrusion_type]['flange_notch_width'])/2, float(extrusionData[extrusion_type]['flange_depth'])))
-                        slot_groove_radii.append(0)
-                        slot_groove_points.append((0, float(extrusionData[extrusion_type]['flange_depth'])+float(extrusionData[extrusion_type]['flange_notch_depth'])))
-                        slot_groove_radii.append(0)
-                        slot_groove_points.append((-float(extrusionData[extrusion_type]['flange_notch_width'])/2, float(extrusionData[extrusion_type]['flange_depth'])))
-                        slot_groove_radii.append(0)
-                    slot_groove_points.append((-float(extrusionData[extrusion_type]['flange_bottom_width'])/2, float(extrusionData[extrusion_type]['flange_depth'])))
-                    slot_groove_radii.append(float(extrusionData[extrusion_type]['flange_bottom_radius']))
-                    if (float(extrusionData[extrusion_type]['flange_offset'])>0):
-                        slot_groove_points.append((-float(extrusionData[extrusion_type]['flange_max_width'])/2, float(extrusionData[extrusion_type]['flange_thickness'])+float(extrusionData[extrusion_type]['flange_offset'])))
-                        slot_groove_radii.append(0)
-                    slot_groove_points.append((-float(extrusionData[extrusion_type]['flange_max_width'])/2, float(extrusionData[extrusion_type]['flange_thickness'])))
-                    slot_groove_radii.append(float(extrusionData[extrusion_type]['flange_top_radius']))
-                    slot_groove_points.append((-float(extrusionData[extrusion_type]['flange_opening'])/2, float(extrusionData[extrusion_type]['flange_thickness'])))
-                    slot_groove_radii.append(float(extrusionData[extrusion_type]['flange_neck_bottom_radius']))
-                    slot_groove_points.append((-float(extrusionData[extrusion_type]['flange_opening'])/2, 0))
-                    #the real figure ends
-                    slot_groove_radii.append(float(extrusionData[extrusion_type]['flange_neck_top_radius']))
-                    slot_groove_points.append((-float(extrusionData[extrusion_type]['flange_opening'])*3/4, 0))
-                    slot_groove_radii.append(0)
-                    slot_groove_points.append((-float(extrusionData[extrusion_type]['flange_opening'])*3/4, -1))
-                    slot_groove_radii.append(0)
-                   
-                    FilletPolyline(slot_groove_points, radius=slot_groove_radii, close=True, mode=Mode.ADD)
+                with BuildLine(Location((x, y, 0), angle=rot)) as grooves:
+                    AluminiumExtrusionIType.getGrooveGeometry(extrusion_type)
                 make_face(edges=grooves.edges(), mode=Mode.SUBTRACT)
         return mainSketch.face()
+
+    @staticmethod
+    def getGrooveGeometry(extrusion_type: str) -> FilletPolyline:
+        extrusionData = AluminiumExtrusionIType.getExtrusionData()
+        points: list[tuple[float, float]] = []
+        radii: list[float] = []
+
+        # Extra start in line with the profile to make easy entry fillet
+        points.append((float(extrusionData[extrusion_type]['flange_opening']) * 3 / 4, -1))
+        radii.append(0)
+        points.append((float(extrusionData[extrusion_type]['flange_opening']) * 3 / 4, 0))
+        radii.append(0)
+
+        # The real figure starts
+        points.append((float(extrusionData[extrusion_type]['flange_opening']) / 2, 0))
+        radii.append(float(extrusionData[extrusion_type]['flange_neck_top_radius']))
+        points.append((float(extrusionData[extrusion_type]['flange_opening']) / 2, float(extrusionData[extrusion_type]['flange_thickness'])))
+        radii.append(float(extrusionData[extrusion_type]['flange_neck_bottom_radius']))
+        points.append((float(extrusionData[extrusion_type]['flange_max_width']) / 2, float(extrusionData[extrusion_type]['flange_thickness'])))
+        radii.append(float(extrusionData[extrusion_type]['flange_top_radius']))
+        if float(extrusionData[extrusion_type]['flange_offset']) > 0:
+            points.append((float(extrusionData[extrusion_type]['flange_max_width']) / 2, float(extrusionData[extrusion_type]['flange_thickness']) + float(extrusionData[extrusion_type]['flange_offset'])))
+            radii.append(0)
+        points.append((float(extrusionData[extrusion_type]['flange_bottom_width']) / 2, float(extrusionData[extrusion_type]['flange_depth'])))
+        radii.append(float(extrusionData[extrusion_type]['flange_bottom_radius']))
+        if float(extrusionData[extrusion_type]['flange_notch_width']) > 0:
+            points.append((float(extrusionData[extrusion_type]['flange_notch_width']) / 2, float(extrusionData[extrusion_type]['flange_depth'])))
+            radii.append(0)
+            points.append((0, float(extrusionData[extrusion_type]['flange_depth']) + float(extrusionData[extrusion_type]['flange_notch_depth'])))
+            radii.append(0)
+            points.append((-float(extrusionData[extrusion_type]['flange_notch_width']) / 2, float(extrusionData[extrusion_type]['flange_depth'])))
+            radii.append(0)
+        points.append((-float(extrusionData[extrusion_type]['flange_bottom_width']) / 2, float(extrusionData[extrusion_type]['flange_depth'])))
+        radii.append(float(extrusionData[extrusion_type]['flange_bottom_radius']))
+        if float(extrusionData[extrusion_type]['flange_offset']) > 0:
+            points.append((-float(extrusionData[extrusion_type]['flange_max_width']) / 2, float(extrusionData[extrusion_type]['flange_thickness']) + float(extrusionData[extrusion_type]['flange_offset'])))
+            radii.append(0)
+        points.append((-float(extrusionData[extrusion_type]['flange_max_width']) / 2, float(extrusionData[extrusion_type]['flange_thickness'])))
+        radii.append(float(extrusionData[extrusion_type]['flange_top_radius']))
+        points.append((-float(extrusionData[extrusion_type]['flange_opening']) / 2, float(extrusionData[extrusion_type]['flange_thickness'])))
+        radii.append(float(extrusionData[extrusion_type]['flange_neck_bottom_radius']))
+        points.append((-float(extrusionData[extrusion_type]['flange_opening']) / 2, 0))
+        radii.append(float(extrusionData[extrusion_type]['flange_neck_top_radius']))
+
+        # The real figure ends
+        points.append((-float(extrusionData[extrusion_type]['flange_opening']) * 3 / 4, 0))
+        radii.append(0)
+        points.append((-float(extrusionData[extrusion_type]['flange_opening']) * 3 / 4, -1))
+        radii.append(0)
+        
+        return FilletPolyline(points, radius=radii, close=True, mode=Mode.ADD)
     
     @staticmethod
     def getDimensionedExtrusionFace(extrusion_type:str, labels:bool)->Face|ShapeList[Face]:  
@@ -158,6 +167,9 @@ class AluminiumExtrusionIType(BasePartObject):
         newFace += hole_dia
 
         return newFace 
+    
+    #@staticmethod
+    #def getDimensionedGroove(extrusion_type:str, labels:bool)->Face|ShapeList[Face]:
 
 
     @staticmethod
@@ -198,8 +210,8 @@ class AluminiumExtrusionIType(BasePartObject):
 if __name__ == "__main__":
     from ocp_vscode import show_all # type: ignore
 
-    #a = AluminiumExtrusionIType(extrusion_type='Misumi HFS5-2020', length=50.0)
-    #b = AluminiumExtrusionIType(extrusion_type='Item24 Profile 5 20x20', length=50.0)
+    a = AluminiumExtrusionIType(extrusion_type='Misumi HFS5-2020', length=50.0)
+    b = AluminiumExtrusionIType(extrusion_type='Item24 Profile 5 20x20', length=50.0)
     name ='Misumi HFS5-2020'
     face= AluminiumExtrusionIType.getDimensionedExtrusionFace(name, labels=true) 
 
