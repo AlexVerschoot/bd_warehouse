@@ -11,7 +11,7 @@ desc:
 
 """
 
-from build123d import Align, BasePartObject, BuildLine, BuildPart, BuildSketch, Circle, Color, DimensionLine, ExtensionLine, Face, Location, Mode, RectangleRounded, FilletPolyline, RotationLike, ShapeList, extrude, make_face, pi, sin, sqrt
+from build123d import Align, BasePartObject, BuildLine, BuildPart, BuildSketch, Circle, Color, DimensionLine, ExtensionLine, Face, Location, Mode, Polyline, RectangleRounded, FilletPolyline, RotationLike, ShapeList, extrude, make_face, pi, sin, sqrt
 from build123d import Draft
 import csv
 import bd_warehouse # type: ignore
@@ -170,10 +170,25 @@ class AluminiumExtrusion(BasePartObject):
     
     @staticmethod
     def getDimensionedGroove(extrusion_type:str, labels:bool): 
-        grooves = AluminiumExtrusion.getGrooveGeometry(extrusion_type)
-        newFace=make_face(edges=grooves.edges(), mode=Mode.ADD).face()
+        #I need this to remove the helper part of the inside corners of the groove
+        extrusionData = AluminiumExtrusion.getExtrusionData()
 
-        return newFace
+        with BuildSketch() as grooves:
+            with BuildLine() as groovesRaw:
+                AluminiumExtrusion.getGrooveGeometry(extrusion_type)
+            make_face(edges=groovesRaw.edges(), mode=Mode.ADD)
+            
+            with BuildLine() as groovesCorrection:
+                #remove the groove helper part
+                points: list[tuple[float, float]] = []
+                points.append((float(extrusionData[extrusion_type]['flange_opening']) * 3 / 4, -1))
+                points.append((float(extrusionData[extrusion_type]['flange_opening']) * 3 / 4, 0))
+                points.append((-float(extrusionData[extrusion_type]['flange_opening']) * 3 / 4, 0))
+                points.append((-float(extrusionData[extrusion_type]['flange_opening']) * 3 / 4, -1))
+                Polyline(points, close=true)
+            make_face(edges=groovesCorrection.edges(), mode=Mode.SUBTRACT)
+
+        return grooves.face()
 
     @staticmethod
     def getExtrusionData() -> dict[str, dict[str, float | str]]: 
