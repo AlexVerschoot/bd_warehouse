@@ -169,8 +169,11 @@ class AluminiumExtrusion(BasePartObject):
         return newFace 
     
     @staticmethod
-    def getDimensionedGroove(extrusion_type:str, labels:bool): # type: ignore
-        pass
+    def getDimensionedGroove(extrusion_type:str, labels:bool): 
+        grooves = AluminiumExtrusion.getGrooveGeometry(extrusion_type)
+        newFace=make_face(edges=grooves.edges(), mode=Mode.ADD).face()
+
+        return newFace
 
     @staticmethod
     def getExtrusionData() -> dict[str, dict[str, float | str]]: 
@@ -213,8 +216,8 @@ if __name__ == "__main__":
     #a = AluminiumExtrusionIType(extrusion_type='Misumi HFS5-2020', length=50.0)
     #b = AluminiumExtrusionIType(extrusion_type='Item24 Profile 5 20x20', length=50.0)
     name ='Misumi HFS5-2020'
-    face= AluminiumExtrusion.getDimensionedExtrusionFace(name, labels=true) 
-
+    #face= AluminiumExtrusion.getDimensionedExtrusionFace(name, labels=true) 
+    groove = AluminiumExtrusion.getDimensionedGroove(name, labels=true)
 
 
 
