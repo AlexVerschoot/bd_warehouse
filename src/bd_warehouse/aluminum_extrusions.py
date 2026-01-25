@@ -165,12 +165,12 @@ class AluminiumExtrusion(BasePartObject):
             )
        #corner_radius.color = Color(0,0,0)
         newFace += hole_dia
+        
 
         return newFace 
     
     @staticmethod
     def getDimensionedGroove(extrusion_type:str, labels:bool): 
-        #I need this to remove the helper part of the inside corners of the groove
         extrusionData = AluminiumExtrusion.getExtrusionData()
 
         with BuildSketch() as grooves:
@@ -188,7 +188,22 @@ class AluminiumExtrusion(BasePartObject):
                 Polyline(points, close=true)
             make_face(edges=groovesCorrection.edges(), mode=Mode.SUBTRACT)
 
-        return grooves.face()
+        draft = Draft(font_size=0.5, extension_gap=0, line_width=0.05, pad_around_text=0.1,arrow_length=0.3)
+        newFace = grooves.face() 
+
+        flange_opening =  ExtensionLine(
+                border=[
+                    (-float(extrusionData[extrusion_type]['flange_opening'])/2, 0,0),
+                    (float(extrusionData[extrusion_type]['flange_opening'])/2, 0,0)
+                ],
+                offset=float(extrusionData[extrusion_type]['flange_opening'])*1/4, 
+                draft=draft,
+                label="flange_opening" if labels else None
+            )
+        flange_opening.color=Color("black")
+        newFace += flange_opening
+
+        return newFace
 
     @staticmethod
     def getExtrusionData() -> dict[str, dict[str, float | str]]: 
