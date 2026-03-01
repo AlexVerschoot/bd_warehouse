@@ -11,7 +11,7 @@ desc:
 
 """
 
-from build123d import Align, BasePartObject, BuildLine, BuildPart, BuildSketch, Circle, Color, DimensionLine, ExtensionLine, Face, Location, Mode, Polyline, RectangleRounded, FilletPolyline, RotationLike, ShapeList, extrude, make_face, pi, sin, sqrt
+from build123d import Align, BasePartObject, BuildLine, BuildPart, BuildSketch, Circle, Color, DimensionLine, ExtensionLine, Face, Location, Mode, Polyline, RectangleRounded, FilletPolyline, RotationLike, ShapeList, extrude, make_face, pi, sin, sqrt, cos
 from build123d import Draft
 import csv
 import bd_warehouse # type: ignore
@@ -205,15 +205,15 @@ class AluminiumExtrusion(BasePartObject):
 
         flange_neck_top_radius = DimensionLine(
                 path=[
-                    (float(extrusionData[extrusion_type]['flange_opening'])/2-float(extrusionData[extrusion_type]['flange_neck_top_radius']), 
-                     float(extrusionData[extrusion_type]['height'])/2-float(extrusionData[extrusion_type]['flange_neck_top_radius']),
-                     0.1),
-                    (float(extrusionData[extrusion_type]['flange_opening'])/2-float(extrusionData[extrusion_type]['flange_neck_top_radius'])+sin(pi/4)*float(extrusionData[extrusion_type]['flange_neck_top_radius']), 
-                     float(extrusionData[extrusion_type]['height'])/2-float(extrusionData[extrusion_type]['flange_neck_top_radius'])+sin(pi/4)*float(extrusionData[extrusion_type]['flange_neck_top_radius']),
+                    (float(extrusionData[extrusion_type]['flange_opening'])/2+float(extrusionData[extrusion_type]['flange_neck_top_radius'])+sin(5*pi/4)*float(extrusionData[extrusion_type]['flange_neck_top_radius']), 
+                     float(extrusionData[extrusion_type]['flange_neck_top_radius'])+sin(5*pi/4)*float(extrusionData[extrusion_type]['flange_neck_top_radius']),
                      0.1) #a little bit higher, so it would be visible over the other arrows
+                    ,(float(extrusionData[extrusion_type]['flange_opening'])/2+5,#-float(extrusionData[extrusion_type]['flange_neck_top_radius']), 
+                     2, #random value to get nice looking angle on the dimension
+                     0.1)
                 ],
                 draft=draft,
-                arrows=(false, true),
+                arrows=(true, false),
                 label="flange_neck_top_radius" if labels else None
             )
         newFace += flange_neck_top_radius
@@ -258,10 +258,13 @@ class AluminiumExtrusion(BasePartObject):
 if __name__ == "__main__":
     from ocp_vscode import show_all # type: ignore
 
-    #a = AluminiumExtrusionIType(extrusion_type='Misumi HFS5-2020', length=50.0)
-    #b = AluminiumExtrusionIType(extrusion_type='Item24 Profile 5 20x20', length=50.0)
+    #Misumi_HFS5_2020 = AluminiumExtrusion(extrusion_type='Misumi HFS5-2020', length=50.0)
+    #Item24_Profile_5_20x20 = AluminiumExtrusion(extrusion_type='Item24 Profile 5 20x20', length=50.0).move(Location([30,0,0]))
     name ='Misumi HFS5-2020'
-    #face= AluminiumExtrusion.getDimensionedExtrusionFace(name, labels=true) 
+    #faceWithLabels = AluminiumExtrusion.getDimensionedExtrusionFace(name, labels=true) 
+    #faceWithDims = AluminiumExtrusion.getDimensionedExtrusionFace(name, labels=false)
+    #for face in faceWithDims:
+    #    face.move(Location([30,0,0]))
     groove = AluminiumExtrusion.getDimensionedGroove(name, labels=true)
 
 
