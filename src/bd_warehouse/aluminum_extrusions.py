@@ -203,6 +203,21 @@ class AluminiumExtrusion(BasePartObject):
         flange_opening.color=Color("black")
         newFace += flange_opening
 
+        flange_neck_top_radius = DimensionLine(
+                path=[
+                    (float(extrusionData[extrusion_type]['flange_opening'])/2-float(extrusionData[extrusion_type]['flange_neck_top_radius']), 
+                     float(extrusionData[extrusion_type]['height'])/2-float(extrusionData[extrusion_type]['flange_neck_top_radius']),
+                     0.1),
+                    (float(extrusionData[extrusion_type]['flange_opening'])/2-float(extrusionData[extrusion_type]['flange_neck_top_radius'])+sin(pi/4)*float(extrusionData[extrusion_type]['flange_neck_top_radius']), 
+                     float(extrusionData[extrusion_type]['height'])/2-float(extrusionData[extrusion_type]['flange_neck_top_radius'])+sin(pi/4)*float(extrusionData[extrusion_type]['flange_neck_top_radius']),
+                     0.1) #a little bit higher, so it would be visible over the other arrows
+                ],
+                draft=draft,
+                arrows=(false, true),
+                label="flange_neck_top_radius" if labels else None
+            )
+        newFace += flange_neck_top_radius
+
         return newFace
 
     @staticmethod
